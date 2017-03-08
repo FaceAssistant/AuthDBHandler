@@ -42,7 +42,9 @@ func main() {
 
     r := mux.NewRouter().StrictSlash(true)
     r.HandleFunc("/auth", controllers.AuthHandler(verifier, db))
-    r.HandleFunc("/create-user", controllers.CreateUserHandler(db))
+    r.HandleFunc("/api/v1/users/create-user", controllers.CreateUserHandler(db))
+    r.HandleFunc("/api/v1/users/loved-one", controllers.CreateLovedOneHandler(db)).Methods("Post")
+    r.HandleFunc("/api/v1/users/loved-one", controllers.GetLovedOneHandler(db)).Methods("Get").Queries("id", "{id:[0-9]+}")
     fmt.Println("listening on 127.0.0.1:8080")
     log.Fatal(http.ListenAndServe(":8080", r))
 }
