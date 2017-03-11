@@ -6,27 +6,23 @@ import (
     "encoding/json"
 )
 
-//NEED TO UPDATE
-type getLovedOneOutput struct {
-    Name string `json:"name"`
+type getLovedOneListOutput struct {
+    LovedOnes []int `json:"loved_ones"`
 }
 
-type createLovedOneInput struct {
-    Name string `json:"name"`
+type createLovedOneOutput struct {
+    Id int `json:"id"`
 }
 
 func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        name, err := db.GetLovedOneByID(r.FormValue("id"))
+        lovedOne, err := db.GetLovedOneByID(r.FormValue("id"))
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
 
-        o := &getLovedOneOutput{
-            Name: name,
-        }
-        err = json.NewEncoder(w).Encode(&o)
+        err = json.NewEncoder(w).Encode(&lovedOne)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
@@ -34,21 +30,44 @@ func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
     }
 }
 
-//WRITE ID FROM SQL RESULT
+func GetLovedOnesForUserHandler(db *model.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        lovedOnes, err := db.GetAllLovedOnes(r.FormValue("user_id"))
+        l := &getLovedOneListOutput{LovedOnes: lovedOnes}
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+
+        err = json.NewEncoder(w).Encode(&l)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+    }
+}
+
 func CreateLovedOneHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        var i createLovedOneInput
-        err := json.NewDecoder(r.Body).Decode(&i)
+        var l model.LovedOne
+        err := json.NewDecoder(r.Body).Decode(&l)
         if err != nil {
             http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }
-        result, err = db.CreateLovedOne(i.Name)
+        id, err := db.CreateLovedOne(&l)
         if err != nil {
             http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }
 
+        o := &createLovedOneOutput{Id: id}
+        b, err := json.Marshal(&o)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
         w.WriteHeader(http.StatusCreated)
+        w.Write(b)
     }
 }
