@@ -5,7 +5,7 @@ import (
 )
 
 type LovedOne struct {
-    Id int                  `db:"id"`
+    Id int                  `json:"id"           db:"id"`
     Name string             `json:"name"         db:"name"`
     Birthday string         `json:"birthday"     db:"birthday"`
     Relationship string     `json:"relationship" db:"relationship"`
@@ -15,16 +15,16 @@ type LovedOne struct {
 }
 
 func (db *DB) GetLovedOneByID(rawId string) (*LovedOne, error) {
-    var l *LovedOne
+    var l LovedOne
     id, err := strconv.Atoi(rawId)
     if err != nil {
-        return l, err
+        return &l, err
     }
-    query := `SELECT name from loved_ones WHERE id=$1;`
+    query := `SELECT * from loved_ones WHERE id=$1;`
     row := db.QueryRowx(query, id)
 
-    err = row.Scan(l)
-    return l, err
+    err = row.StructScan(&l)
+    return &l, err
 }
 
 func (db *DB) CreateLovedOne(l *LovedOne) (int, error) {
