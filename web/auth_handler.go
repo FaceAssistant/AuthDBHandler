@@ -2,57 +2,48 @@ package web
 
 import (
     "net/http"
-    "encoding/json"
     "golang.org/x/net/context"
     oidc "github.com/coreos/go-oidc"
     "fa-db/model"
+    "strconv"
+    "fmt"
 )
-
-type IdToken struct {
-    RawIDToken string `json:"id_token"`
-}
-
-type AuthOutput struct {
-    UserId int `json:"user_id"`
-}
 
 func AuthHandler(v *oidc.IDTokenVerifier, db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        ctx := context.Background()
-
-        var t *IdToken
-        err := json.NewDecoder(r.Body).Decode(&t)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
-            return
-        }
-
-        idToken, err := v.Verify(ctx, t.RawIDToken)
-        if err != nil {
-			http.Error(w, "Failed to verify ID Token: "+err.Error(), http.StatusInternalServerError)
-			return
-        }
-
-        var claims struct {
-            Email string `json:"email"`
-        }
-
-        if err = idToken.Claims(&claims); err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-        }
-
-        userId, err := db.GetUserId(claims.Email)
+        rawIdToken := r.Header.Get("Authorization")
+        email, err := AuthAndGetEmail(v, rawIdToken)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
 
-        o := &AuthOutput{UserId:userId}
-        err = json.NewEncoder(w).Encode(&o)
+        userId, err := db.GetUserId(email)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
+
+        w.Header().Set("Authorization", strconv.Itoa(userId))
+        w.WriteHeader(http.StatusOK)
     }
+}
+
+func AuthAndGetEmail(v *oidc.IDTokenVerifier, rawIdToken string) (string, error) {
+    ctx := context.Background()
+    idToken, err := v.Verify(ctx, rawIdToken)
+    if err != nil {
+        fmt.Println("Failed to verify token")
+        return "", err
+    }
+
+    var claims struct {
+        Email string `json:"email"`
+    }
+
+    if err = idToken.Claims(&claims); err != nil {
+        return "", err
+    }
+
+    return claims.Email, nil
 }

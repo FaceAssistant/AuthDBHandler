@@ -6,10 +6,12 @@ import (
     "log"
     "os"
     "fmt"
+    "github.com/justinas/alice"
     oidc "github.com/coreos/go-oidc"
 	"golang.org/x/net/context"
     "fa-db/web"
     "fa-db/model"
+    "fa-db/middleware"
 )
 
 var (
@@ -24,10 +26,12 @@ var (
 )
 
 func main() {
+    fmt.Println("Starting")
     db, err := model.NewDB(fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPass, dbHost, dbPort, dbName))
     if err != nil {
         panic(err)
     }
+    fmt.Println("here")
     ctx := context.Background()
     provider, err := oidc.NewProvider(ctx, "https://accounts.google.com")
     if err != nil {
@@ -43,10 +47,11 @@ func main() {
     //Use auth middleware
     r := mux.NewRouter().StrictSlash(true)
     r.HandleFunc("/auth", web.AuthHandler(verifier, db))
-    r.HandleFunc("/api/v1/users/create-user", web.CreateUserHandler(db))
-    r.HandleFunc("/api/v1/users/loved-one", web.CreateLovedOneHandler(db)).Methods("Post")
-    r.HandleFunc("/api/v1/users/loved-one", web.GetLovedOneHandler(db)).Methods("Get").Queries("id", "{id:[0-9]+}")
-    r.HandleFunc("/api/v1/users/loved-one", web.GetLovedOnesForUserHandler(db)).Methods("Get").Queries("user_id","{id:[0-9]+}")
+    r.HandleFunc("/login", web.LoginHandler(verifier, db))
+    r.HandleFunc("/loved-one", web.CreateLovedOneHandler(db)).Methods("Post")
+    r.HandleFunc("/loved-one", web.GetLovedOneHandler(db)).Methods("Get").Queries("id", "{id:[0-9]+}")
+    r.HandleFunc("/loved-one", web.GetLovedOnesForUserHandler(db)).Methods("Get").Queries("user_id","{id:[0-9]+}")
     fmt.Println("listening on 127.0.0.1:8080")
-    log.Fatal(http.ListenAndServe(":8080", r))
+    a := alice.New(middleware.RequestDump).Then(r)
+    log.Fatal(http.ListenAndServe(":8080", a))
 }

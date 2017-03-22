@@ -4,6 +4,7 @@ import (
     "net/http"
     "fa-db/model"
     "encoding/json"
+    "strconv"
 )
 
 type getLovedOneListOutput struct {
@@ -33,12 +34,16 @@ func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
 func GetLovedOnesForUserHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         lovedOnes, err := db.GetAllLovedOnes(r.FormValue("user_id"))
-        l := &getLovedOneListOutput{LovedOnes: lovedOnes}
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
 
+        if lovedOnes == nil {
+            lovedOnes = make([]int, 0)
+        }
+
+        l := &getLovedOneListOutput{LovedOnes: lovedOnes}
         err = json.NewEncoder(w).Encode(&l)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -55,6 +60,16 @@ func CreateLovedOneHandler(db *model.DB) http.HandlerFunc {
             http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }
+
+        uid := r.Header.Get("Authorization")
+        userId, err := strconv.Atoi(uid)
+        if err != nil {
+            http.Error(w, "Faild to convert userId to int: " + err.Error(), http.StatusBadRequest)
+            return
+
+        }
+
+        l.UserId = userId
         id, err := db.CreateLovedOne(&l)
         if err != nil {
             http.Error(w, err.Error(), http.StatusBadRequest)

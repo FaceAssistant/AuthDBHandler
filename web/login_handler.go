@@ -3,32 +3,28 @@ package web
 import (
     "net/http"
     "fa-db/model"
-    "encoding/json"
+    oidc "github.com/coreos/go-oidc"
 )
 
-type CreateUserInput struct {
-    Email string `json:"email"`
-}
-
-func CreateUserHandler(db *model.DB) http.HandlerFunc {
+func LoginHandler(v *oidc.IDTokenVerifier, db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        var i CreateUserInput
-        err := json.NewDecoder(r.Body).Decode(&i)
+        rawIdToken := r.Header.Get("Authorization")
+        email, err := AuthAndGetEmail(v, rawIdToken)
         if err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
+            http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
 
-        if db.UserExist(i.Email) {
+        if db.UserExist(email) {
             w.Write([]byte("User exists. OK"))
         } else {
-            _, err = db.CreateUser(i.Email)
+            _, err = db.CreateUser(email)
             if err != nil {
                 http.Error(w, err.Error(), http.StatusInternalServerError)
                 return
             }
             w.WriteHeader(http.StatusCreated)
-            w.Write([]byte("User:" + i.Email + " created."))
+            w.Write([]byte("User:" + email + " created."))
         }
     }
 }
