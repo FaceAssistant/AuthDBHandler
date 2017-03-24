@@ -1,9 +1,5 @@
 package model
 
-import (
-    "strconv"
-)
-
 type LovedOne struct {
     Id int                  `json:"id"           db:"id"`
     Name string             `json:"name"         db:"name"`
@@ -11,19 +7,14 @@ type LovedOne struct {
     Relationship string     `json:"relationship" db:"relationship"`
     Note string             `json:"note"         db:"note"`
     LastViewed string       `json:"last_viewed"  db:"last_viewed"`
-    UserId int              `json:"user_id"      db:"user_id"`
+    UserId string              `json:"user_id"      db:"user_id"`
 }
 
-func (db *DB) GetLovedOneByID(rawId string) (*LovedOne, error) {
+func (db *DB) GetLovedOne(id string, userId string) (*LovedOne, error) {
     var l LovedOne
-    id, err := strconv.Atoi(rawId)
-    if err != nil {
-        return &l, err
-    }
-    query := `SELECT * from loved_ones WHERE id=$1;`
-    row := db.QueryRowx(query, id)
-
-    err = row.StructScan(&l)
+    query := `SELECT * from loved_ones WHERE id=$1 AND user_id=$2;`
+    row := db.QueryRowx(query, id, userId)
+    err := row.StructScan(&l)
     return &l, err
 }
 
@@ -37,13 +28,9 @@ func (db *DB) CreateLovedOne(l *LovedOne) (int, error) {
     return id, nil
 }
 
-func (db *DB) GetAllLovedOnes(rawUserId string) ([]int, error) {
+func (db *DB) GetAllLovedOnes(userId string) ([]int, error) {
     var lovedOneIds []int
     query := `SELECT id from loved_ones WHERE user_id=$1`
-    userId, err := strconv.Atoi(rawUserId)
-    if err != nil {
-        return lovedOneIds, err
-    }
 
     rows, err := db.Queryx(query, userId)
     if err != nil  {
