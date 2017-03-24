@@ -16,7 +16,7 @@ type createLovedOneOutput struct {
 
 func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        if userId, ok := r.Context().Value("sub").(string); ok {
+        if userId, ok := r.Context().Value("uid").(string); ok {
             lovedOne, err := db.GetLovedOne(r.FormValue("id"), userId)
             if err != nil {
                 http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,7 +37,7 @@ func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
 
 func GetLovedOnesListHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        if userId, ok := r.Context().Value("sub").(string); ok {
+        if userId, ok := r.Context().Value("uid").(string); ok {
             lovedOnes, err := db.GetAllLovedOnes(userId)
             if err != nil {
                 http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func GetLovedOnesListHandler(db *model.DB) http.HandlerFunc {
 
 func CreateLovedOneHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        if userId, ok := r.Context().Value("sub").(string); ok {
+        if userId, ok := r.Context().Value("uid").(string); ok {
             var l model.LovedOne
             err := json.NewDecoder(r.Body).Decode(&l)
             if err != nil {

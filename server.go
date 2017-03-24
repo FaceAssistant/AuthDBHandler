@@ -44,6 +44,7 @@ func main() {
 
     //Use auth middleware
     r := mux.NewRouter().StrictSlash(true)
+    r.HandleFunc("/auth", web.AuthHandler()).Methods("Post")
     r.HandleFunc("/loved-one", web.CreateLovedOneHandler(db)).Methods("Post")
     r.HandleFunc("/loved-one", web.GetLovedOneHandler(db)).Methods("Get").Queries("id", "{id:[0-9]+}")
     r.HandleFunc("/loved-one", web.GetLovedOnesListHandler(db)).Methods("Get")

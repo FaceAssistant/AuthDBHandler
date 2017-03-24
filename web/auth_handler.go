@@ -2,48 +2,26 @@ package web
 
 import (
     "net/http"
-    "golang.org/x/net/context"
-    oidc "github.com/coreos/go-oidc"
-    "fa-db/model"
-    "strconv"
-    "fmt"
+    "encoding/json"
 )
 
-func AuthHandler(v *oidc.IDTokenVerifier, db *model.DB) http.HandlerFunc {
+type AuthOutput struct {
+    UserId string `json:"user_id"`
+}
+
+func AuthHandler() http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        rawIdToken := r.Header.Get("Authorization")
-        email, err := AuthAndGetEmail(v, rawIdToken)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
+        if userId, ok := r.Context().Value("uid").(string); ok {
+            o := &AuthOutput{UserId: userId}
+            err := json.NewEncoder(w).Encode(&o)
+            if err != nil {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+            }
+        } else  {
+            http.Error(w, "Failed to get user id from context.", http.StatusInternalServerError)
             return
         }
-
-        userId, err := db.GetUserId(email)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
-
-        w.Header().Set("Authorization", strconv.Itoa(userId))
-        w.WriteHeader(http.StatusOK)
     }
 }
 
-func AuthAndGetEmail(v *oidc.IDTokenVerifier, rawIdToken string) (string, error) {
-    ctx := context.Background()
-    idToken, err := v.Verify(ctx, rawIdToken)
-    if err != nil {
-        fmt.Println("Failed to verify token")
-        return "", err
-    }
-
-    var claims struct {
-        Email string `json:"email"`
-    }
-
-    if err = idToken.Claims(&claims); err != nil {
-        return "", err
-    }
-
-    return claims.Email, nil
-}

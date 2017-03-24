@@ -29,7 +29,7 @@ func AuthRequest(v *oidc.IDTokenVerifier) func(http.Handler) http.Handler {
                 http.Error(w, err.Error(), http.StatusUnauthorized)
                 return
             }
-            newCtx := context.WithValue(r.Context(), "sub", sub)
+            newCtx := context.WithValue(r.Context(), "uid", sub)
             next.ServeHTTP(w, r.WithContext(newCtx))
         })
     }
