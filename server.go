@@ -46,7 +46,7 @@ func main() {
     r := mux.NewRouter().StrictSlash(true)
     r.HandleFunc("/auth", web.AuthHandler()).Methods("Post")
     r.HandleFunc("/loved-one", web.CreateLovedOneHandler(db)).Methods("Post")
-    r.HandleFunc("/loved-one", web.GetLovedOneHandler(db)).Methods("Get").Queries("id", "{id:[0-9]+}")
+    r.HandleFunc("/loved-one", web.GetLovedOneHandler(db)).Methods("Get").Queries("id","")
     r.HandleFunc("/loved-one", web.GetLovedOnesListHandler(db)).Methods("Get")
     fmt.Println("listening on 127.0.0.1:8080")
     a := alice.New(middleware.AuthRequest(verifier), middleware.RequestDump).Then(r)

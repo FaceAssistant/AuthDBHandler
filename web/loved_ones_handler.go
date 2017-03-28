@@ -7,11 +7,11 @@ import (
 )
 
 type getLovedOneListOutput struct {
-    LovedOnes []int `json:"loved_ones"`
+    LovedOnes []string `json:"loved_ones"`
 }
 
 type createLovedOneOutput struct {
-    Id int `json:"id"`
+    Id string `json:"id"`
 }
 
 func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
@@ -45,7 +45,7 @@ func GetLovedOnesListHandler(db *model.DB) http.HandlerFunc {
             }
 
             if lovedOnes == nil {
-                lovedOnes = make([]int, 0)
+                lovedOnes = make([]string, 0)
             }
 
             l := &getLovedOneListOutput{LovedOnes: lovedOnes}

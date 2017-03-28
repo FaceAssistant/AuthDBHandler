@@ -1,13 +1,13 @@
 package model
 
 type LovedOne struct {
-    Id int                  `json:"id"           db:"id"`
+    Id string               `json:"id"           db:"id"`
     Name string             `json:"name"         db:"name"`
     Birthday string         `json:"birthday"     db:"birthday"`
     Relationship string     `json:"relationship" db:"relationship"`
     Note string             `json:"note"         db:"note"`
     LastViewed string       `json:"last_viewed"  db:"last_viewed"`
-    UserId string              `json:"user_id"      db:"user_id"`
+    UserId string           `json:"user_id"      db:"user_id"`
 }
 
 func (db *DB) GetLovedOne(id string, userId string) (*LovedOne, error) {
@@ -18,18 +18,18 @@ func (db *DB) GetLovedOne(id string, userId string) (*LovedOne, error) {
     return &l, err
 }
 
-func (db *DB) CreateLovedOne(l *LovedOne) (int, error) {
-    query := `INSERT INTO loved_ones(name, birthday, relationship, note, last_viewed, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
-    var id int
-    err := db.QueryRowx(query, l.Name, l.Birthday, l.Relationship, l.Note, l.LastViewed, l.UserId).Scan(&id)
+func (db *DB) CreateLovedOne(l *LovedOne) (string, error) {
+    query := `INSERT INTO loved_ones(id, name, birthday, relationship, note, last_viewed, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
+    var id string
+    err := db.QueryRowx(query, l.Id, l.Name, l.Birthday, l.Relationship, l.Note, l.LastViewed, l.UserId).Scan(&id)
     if err != nil {
-        return -1, err
+        return "", err
     }
     return id, nil
 }
 
-func (db *DB) GetAllLovedOnes(userId string) ([]int, error) {
-    var lovedOneIds []int
+func (db *DB) GetAllLovedOnes(userId string) ([]string, error) {
+    var lovedOneIds []string
     query := `SELECT id from loved_ones WHERE user_id=$1`
 
     rows, err := db.Queryx(query, userId)
@@ -38,7 +38,7 @@ func (db *DB) GetAllLovedOnes(userId string) ([]int, error) {
     }
 
     for rows.Next() {
-        var id int
+        var id string
         err = rows.Scan(&id)
         if err != nil {
             return lovedOneIds, err
@@ -47,3 +47,9 @@ func (db *DB) GetAllLovedOnes(userId string) ([]int, error) {
     }
     return lovedOneIds, err
 }
+
+//func (db *DB) DeleteLovedOne(id int, userId string) {
+    //query := `DELETE FROM loved_ones WHERE id=$1 and userId=$2;`
+
+
+//}
