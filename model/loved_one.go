@@ -48,8 +48,11 @@ func (db *DB) GetAllLovedOnes(userId string) ([]string, error) {
     return lovedOneIds, err
 }
 
-//func (db *DB) DeleteLovedOne(id int, userId string) {
-    //query := `DELETE FROM loved_ones WHERE id=$1 and userId=$2;`
-
-
-//}
+func (db *DB) DeleteLovedOne(id string, userId string) error {
+    query := `DELETE FROM loved_ones WHERE id=$1 and userId=$2;`
+    _, err := db.Exec(query, id, userId)
+    if err != nil {
+        return err
+    }
+    return nil
+}

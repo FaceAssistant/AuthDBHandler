@@ -93,3 +93,18 @@ func CreateLovedOneHandler(db *model.DB) http.HandlerFunc {
         }
     }
 }
+
+func DeleteLovedOneHandler(db *model.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if userId, ok := r.Context().Value("uid").(string); ok {
+            err := db.DeleteLovedOne(r.FormValue("id"), userId)
+            if err != nil {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+            }
+        } else {
+            http.Error(w, "Failed to get subject from context", http.StatusInternalServerError)
+            return
+        }
+    }
+}
