@@ -28,7 +28,7 @@ func (db *DB) CreateLovedOne(l *LovedOne) (string, error) {
     return id, nil
 }
 
-func (db *DB) GetAllLovedOnes(userId string) ([]string, error) {
+func (db *DB) GetAllLovedOnesId(userId string) ([]string, error) {
     var lovedOneIds []string
     query := `SELECT id from loved_ones WHERE user_id=$1`
 
@@ -48,8 +48,27 @@ func (db *DB) GetAllLovedOnes(userId string) ([]string, error) {
     return lovedOneIds, err
 }
 
+func (db *DB) GetAllLovedOnesProfile(userId string) ([]LovedOne, error) {
+    var profiles []LovedOne
+    query := `SELECT * from loved_ones WHERE user_id=$1`
+
+    rows, err := db.Queryx(query, userId)
+    if err != nil  {
+        return profiles, err
+    }
+
+    for rows.Next() {
+        var l LovedOne
+        err = rows.StructScan(&l)
+        if err != nil {
+            return profiles, err
+        }
+        profiles = append(profiles, l)
+    }
+    return profiles, err
+}
 func (db *DB) DeleteLovedOne(id string, userId string) error {
-    query := `DELETE FROM loved_ones WHERE id=$1 and userId=$2;`
+    query := `DELETE FROM loved_ones WHERE id=$1 and user_id=$2;`
     _, err := db.Exec(query, id, userId)
     if err != nil {
         return err

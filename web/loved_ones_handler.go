@@ -10,6 +10,10 @@ type getLovedOneListOutput struct {
     LovedOnes []string `json:"loved_ones"`
 }
 
+type getProfileListOutput struct {
+    Profiles []model.LovedOne `json:"profiles"`
+}
+
 type createLovedOneOutput struct {
     Id string `json:"id"`
 }
@@ -38,21 +42,40 @@ func GetLovedOneHandler(db *model.DB) http.HandlerFunc {
 func GetLovedOnesListHandler(db *model.DB) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         if userId, ok := r.Context().Value("uid").(string); ok {
-            lovedOnes, err := db.GetAllLovedOnes(userId)
-            if err != nil {
-                http.Error(w, err.Error(), http.StatusInternalServerError)
-                return
-            }
+            if r.FormValue("type") != "profile" {
+                lovdOnesId, err := db.GetAllLovedOnesId(userId)
+                if err != nil {
+                    http.Error(w, err.Error(), http.StatusInternalServerError)
+                    return
+                }
 
-            if lovedOnes == nil {
-                lovedOnes = make([]string, 0)
-            }
+                if lovdOnesId == nil {
+                    lovdOnesId = make([]string, 0)
+                }
 
-            l := &getLovedOneListOutput{LovedOnes: lovedOnes}
-            err = json.NewEncoder(w).Encode(&l)
-            if err != nil {
-                http.Error(w, err.Error(), http.StatusInternalServerError)
-                return
+                l := &getLovedOneListOutput{LovedOnes: lovdOnesId}
+                err = json.NewEncoder(w).Encode(&l)
+                if err != nil {
+                    http.Error(w, err.Error(), http.StatusInternalServerError)
+                    return
+                }
+            } else {
+                profiles, err := db.GetAllLovedOnesProfile(userId)
+                if err != nil {
+                    http.Error(w, err.Error(), http.StatusInternalServerError)
+                    return
+                }
+
+                if profiles == nil {
+                    profiles = make([]model.LovedOne, 0)
+                }
+
+                o := &getProfileListOutput{Profiles: profiles}
+                err = json.NewEncoder(w).Encode(&o)
+                if err != nil {
+                    http.Error(w, err.Error(), http.StatusInternalServerError)
+                    return
+                }
             }
         } else {
             http.Error(w, "Failed to get subject from context", http.StatusInternalServerError)
